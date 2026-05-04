@@ -1,124 +1,196 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ST Travel — Personal Travel Dashboard</title>
+<title>ST Travel</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --ink: #0a0a0f;
-    --paper: #f4f1eb;
-    --gold: #c9a84c;
-    --gold-light: #e8d5a3;
-    --muted: #8a8070;
-    --border: #d4cfc4;
-    --surface: #ffffff;
-    --error: #c0392b;
-    --success: #1a6b3a;
-  }
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body { background:var(--paper); color:var(--ink); font-family:'Outfit',sans-serif; font-weight:300; min-height:100vh; }
-  header { background:var(--ink); padding:1.5rem 2.5rem; display:flex; align-items:center; justify-content:space-between; }
-  .logo { font-family:'Cormorant Garamond',serif; font-size:1.6rem; font-weight:300; color:var(--gold); letter-spacing:0.08em; }
-  .logo span { color:#fff; font-style:italic; }
-  .header-right { display:flex; align-items:center; gap:1rem; }
-  .api-status { font-family:'DM Mono',monospace; font-size:0.65rem; letter-spacing:0.1em; text-transform:uppercase; padding:0.3rem 0.8rem; border-radius:20px; background:rgba(255,255,255,0.08); color:var(--muted); }
-  .api-status.connected { background:rgba(26,107,58,0.3); color:#4caf7d; }
-  .config-btn { background:var(--gold); color:var(--ink); border:none; padding:0.5rem 1.2rem; font-family:'DM Mono',monospace; font-size:0.68rem; letter-spacing:0.08em; cursor:pointer; border-radius:2px; font-weight:500; }
-  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(10,10,15,0.88); z-index:100; align-items:center; justify-content:center; }
-  .modal-overlay.open { display:flex; }
-  .modal { background:var(--surface); border:1px solid var(--border); padding:2.5rem; width:min(500px,92vw); border-radius:4px; }
-  .modal h2 { font-family:'Cormorant Garamond',serif; font-size:2rem; font-weight:300; margin-bottom:0.4rem; }
-  .modal-subtitle { font-size:0.82rem; color:var(--muted); margin-bottom:1.5rem; line-height:1.6; }
-  .modal-subtitle a { color:var(--gold); text-decoration:none; }
-  .steps { background:var(--paper); border:1px solid var(--border); border-radius:4px; padding:1rem 1.2rem; margin-bottom:1.5rem; font-size:0.8rem; line-height:1.9; }
-  .steps a { color:var(--gold); text-decoration:none; }
-  .form-group { margin-bottom:1.2rem; }
-  .form-group label { display:block; font-family:'DM Mono',monospace; font-size:0.62rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); margin-bottom:0.4rem; }
-  .form-group input, .form-group select { width:100%; padding:0.75rem 1rem; border:1px solid var(--border); background:var(--paper); font-family:'DM Mono',monospace; font-size:0.8rem; color:var(--ink); border-radius:2px; outline:none; transition:border-color 0.2s; }
-  .form-group input:focus, .form-group select:focus { border-color:var(--gold); }
-  .modal-actions { display:flex; gap:0.75rem; }
-  .btn-primary { flex:1; padding:0.9rem; background:var(--ink); color:var(--gold); border:none; font-family:'DM Mono',monospace; font-size:0.72rem; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer; border-radius:2px; }
-  .btn-secondary { padding:0.9rem 1.5rem; background:transparent; color:var(--muted); border:1px solid var(--border); font-family:'DM Mono',monospace; font-size:0.72rem; cursor:pointer; border-radius:2px; }
-  main { padding:2rem 2.5rem; max-width:1300px; margin:0 auto; }
-  .tabs { display:flex; border-bottom:2px solid var(--border); margin-bottom:2rem; }
-  .tab { padding:0.8rem 1.8rem; font-family:'DM Mono',monospace; font-size:0.7rem; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer; border:none; background:none; color:var(--muted); border-bottom:2px solid transparent; margin-bottom:-2px; transition:all 0.2s; }
-  .tab.active { color:var(--ink); border-bottom-color:var(--gold); font-weight:500; }
-  .tab-content { display:none; }
-  .tab-content.active { display:block; }
-  .search-panel { background:var(--surface); border:1px solid var(--border); padding:2rem; margin-bottom:2rem; border-radius:4px; }
-  .panel-title { font-family:'Cormorant Garamond',serif; font-size:1.3rem; font-weight:400; margin-bottom:1.2rem; display:flex; align-items:center; gap:0.75rem; }
-  .quota-badge { font-family:'DM Mono',monospace; font-size:0.6rem; background:var(--paper); border:1px solid var(--border); padding:0.2rem 0.6rem; border-radius:20px; color:var(--muted); }
-  .pref-label { font-family:'DM Mono',monospace; font-size:0.62rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:0.5rem; }
-  .chips-row { display:flex; gap:0.4rem; flex-wrap:wrap; margin-bottom:1.4rem; }
-  .chip { padding:0.28rem 0.75rem; border:1px solid var(--border); border-radius:20px; font-family:'DM Mono',monospace; font-size:0.63rem; cursor:pointer; background:white; color:var(--muted); transition:all 0.15s; user-select:none; }
-  .chip.active { background:var(--ink); color:var(--gold); border-color:var(--ink); }
-  .search-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:1rem; margin-bottom:1.4rem; }
-  .search-btn { display:inline-flex; align-items:center; gap:0.5rem; padding:0.85rem 2rem; background:var(--gold); color:var(--ink); border:none; font-family:'DM Mono',monospace; font-size:0.72rem; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer; border-radius:2px; font-weight:500; transition:all 0.2s; }
-  .search-btn:hover { background:var(--gold-light); }
-  .search-btn:disabled { opacity:0.45; cursor:not-allowed; }
-  .loading { display:none; text-align:center; padding:3rem; }
-  .loading.active { display:block; }
-  .spinner { width:28px; height:28px; border:2px solid var(--border); border-top-color:var(--gold); border-radius:50%; animation:spin 0.7s linear infinite; margin:0 auto 1rem; }
-  @keyframes spin { to { transform:rotate(360deg); } }
-  .loading-text { font-family:'DM Mono',monospace; font-size:0.7rem; color:var(--muted); letter-spacing:0.1em; text-transform:uppercase; }
-  .results-header { display:flex; align-items:baseline; justify-content:space-between; margin-bottom:1rem; }
-  .results-title { font-family:'Cormorant Garamond',serif; font-size:1.3rem; font-weight:400; }
-  .results-meta { font-family:'DM Mono',monospace; font-size:0.63rem; color:var(--muted); }
-  .price-insight { background:var(--ink); color:var(--gold-light); padding:0.75rem 1.2rem; border-radius:4px; margin-bottom:1rem; font-family:'DM Mono',monospace; font-size:0.68rem; display:flex; align-items:center; gap:1.2rem; flex-wrap:wrap; }
-  .insight-label { color:var(--muted); }
-  .flight-card { background:var(--surface); border:1px solid var(--border); border-radius:4px; padding:1.4rem 1.6rem; margin-bottom:0.6rem; display:grid; grid-template-columns:2.5rem 1fr auto auto; gap:1.2rem; align-items:center; transition:border-color 0.2s, box-shadow 0.2s; animation:fadeUp 0.25s ease forwards; opacity:0; }
-  .flight-card.preferred { border-left:3px solid var(--gold); }
-  .flight-card:hover { border-color:var(--gold); box-shadow:0 3px 16px rgba(201,168,76,0.12); }
-  @keyframes fadeUp { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
-  .airline-logo { width:2.5rem; height:2.5rem; object-fit:contain; border-radius:4px; background:var(--paper); padding:2px; }
-  .airline-placeholder { width:2.5rem; height:2.5rem; background:var(--paper); border:1px solid var(--border); border-radius:4px; display:flex; align-items:center; justify-content:center; font-family:'DM Mono',monospace; font-size:0.52rem; color:var(--muted); text-align:center; }
-  .flight-main { display:flex; align-items:center; gap:1.2rem; }
-  .time-block { min-width:3.5rem; }
-  .flight-time { font-family:'Cormorant Garamond',serif; font-size:1.5rem; font-weight:300; line-height:1; }
-  .flight-airport { font-family:'DM Mono',monospace; font-size:0.6rem; color:var(--muted); margin-top:0.2rem; }
-  .route-line { flex:1; display:flex; flex-direction:column; align-items:center; gap:0.25rem; }
-  .route-duration { font-family:'DM Mono',monospace; font-size:0.62rem; color:var(--muted); }
-  .route-bar { width:100%; height:1px; background:var(--border); position:relative; }
-  .route-bar::before, .route-bar::after { content:''; position:absolute; top:50%; transform:translateY(-50%); width:4px; height:4px; border-radius:50%; background:var(--gold); }
-  .route-bar::before { left:0; }
-  .route-bar::after { right:0; }
-  .route-stops { font-family:'DM Mono',monospace; font-size:0.58rem; color:var(--muted); }
-  .route-stops.direct { color:var(--success); }
-  .flight-carrier { text-align:center; min-width:7rem; }
-  .carrier-name { font-family:'DM Mono',monospace; font-size:0.68rem; font-weight:500; }
-  .carrier-sub { font-size:0.62rem; color:var(--muted); margin-top:0.2rem; }
-  .preferred-tag { display:inline-block; font-family:'DM Mono',monospace; font-size:0.52rem; background:var(--gold); color:var(--ink); padding:0.12rem 0.45rem; border-radius:20px; margin-top:0.3rem; }
-  .delayed-tag { display:inline-block; font-family:'DM Mono',monospace; font-size:0.52rem; background:rgba(192,57,43,0.12); color:var(--error); padding:0.12rem 0.45rem; border-radius:20px; margin-top:0.3rem; }
-  .flight-price { text-align:right; min-width:6rem; }
-  .price-main { font-family:'Cormorant Garamond',serif; font-size:1.75rem; font-weight:300; line-height:1; }
-  .price-sub { font-family:'DM Mono',monospace; font-size:0.6rem; color:var(--muted); margin-top:0.2rem; }
-  .price-total { font-family:'DM Mono',monospace; font-size:0.65rem; color:var(--ink); font-weight:500; margin-top:0.3rem; }
-  .hotel-card { background:var(--surface); border:1px solid var(--border); border-radius:4px; padding:1.4rem 1.6rem; margin-bottom:0.6rem; display:grid; grid-template-columns:1fr auto; gap:1.5rem; align-items:start; transition:border-color 0.2s, box-shadow 0.2s; animation:fadeUp 0.25s ease forwards; opacity:0; }
-  .hotel-card.preferred { border-left:3px solid var(--gold); }
-  .hotel-card:hover { border-color:var(--gold); box-shadow:0 3px 16px rgba(201,168,76,0.12); }
-  .hotel-name { font-family:'Cormorant Garamond',serif; font-size:1.25rem; font-weight:400; margin-bottom:0.2rem; }
-  .hotel-brand { font-family:'DM Mono',monospace; font-size:0.62rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.6rem; }
-  .hotel-meta { display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center; }
-  .stars { color:var(--gold); font-size:0.72rem; }
-  .rating-badge { font-family:'DM Mono',monospace; font-size:0.62rem; background:var(--ink); color:var(--gold); padding:0.15rem 0.5rem; border-radius:3px; }
-  .amenity-tag { font-family:'DM Mono',monospace; font-size:0.58rem; border:1px solid var(--border); padding:0.12rem 0.4rem; border-radius:2px; color:var(--muted); }
-  .empty-state { text-align:center; padding:3rem 2rem; border:1px dashed var(--border); border-radius:4px; }
-  .empty-state p { font-family:'Cormorant Garamond',serif; font-size:1.2rem; font-style:italic; color:var(--muted); margin-bottom:0.4rem; }
-  .empty-state small { font-family:'DM Mono',monospace; font-size:0.62rem; color:var(--muted); }
-  .no-key-banner { background:var(--ink); border-radius:4px; padding:3rem; text-align:center; }
-  .no-key-banner h3 { font-family:'Cormorant Garamond',serif; font-size:1.8rem; font-weight:300; color:var(--gold); margin-bottom:0.6rem; }
-  .no-key-banner p { font-size:0.85rem; color:#888; margin-bottom:1.5rem; line-height:1.6; }
-  .no-key-banner button { background:var(--gold); color:var(--ink); border:none; padding:0.8rem 2rem; font-family:'DM Mono',monospace; font-size:0.72rem; letter-spacing:0.1em; cursor:pointer; border-radius:2px; font-weight:500; }
-  @media(max-width:768px) {
-    header { padding:1rem 1.2rem; }
-    main { padding:1rem 1.2rem; }
-    .flight-card { grid-template-columns:1fr; }
-    .hotel-card { grid-template-columns:1fr; }
-    .search-grid { grid-template-columns:1fr 1fr; }
-  }
+:root {
+  --ink: #0a0a0f;
+  --paper: #f4f1eb;
+  --gold: #c9a84c;
+  --gold-light: #e8d5a3;
+  --gold-dim: rgba(201,168,76,0.15);
+  --muted: #8a8070;
+  --border: #d4cfc4;
+  --surface: #ffffff;
+  --error: #c0392b;
+  --success: #1a6b3a;
+  --titanium: #7b8fa1;
+  --titanium-bg: rgba(123,143,161,0.12);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--paper);color:var(--ink);font-family:'Outfit',sans-serif;font-weight:300;min-height:100vh;}
+
+/* HEADER */
+header{background:var(–ink);padding:1.2rem 2rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;border-bottom:1px solid #1a1a2a;}
+.logo{font-family:‘Cormorant Garamond’,serif;font-size:1.5rem;font-weight:300;color:var(–gold);letter-spacing:0.08em;}
+.logo span{color:#fff;font-style:italic;}
+.header-right{display:flex;align-items:center;gap:0.75rem;}
+.api-status{font-family:‘DM Mono’,monospace;font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.25rem 0.7rem;border-radius:20px;background:rgba(255,255,255,0.06);color:var(–muted);}
+.api-status.connected{background:rgba(26,107,58,0.25);color:#4caf7d;}
+.config-btn{background:var(–gold);color:var(–ink);border:none;padding:0.45rem 1rem;font-family:‘DM Mono’,monospace;font-size:0.65rem;letter-spacing:0.08em;cursor:pointer;border-radius:2px;font-weight:500;}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(10,10,15,0.9);z-index:200;align-items:center;justify-content:center;padding:1rem;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(–surface);border:1px solid var(–border);padding:2rem;width:min(480px,100%);border-radius:6px;max-height:90vh;overflow-y:auto;}
+.modal h2{font-family:‘Cormorant Garamond’,serif;font-size:1.8rem;font-weight:300;margin-bottom:0.4rem;}
+.modal-sub{font-size:0.8rem;color:var(–muted);margin-bottom:1.4rem;line-height:1.6;}
+.modal-sub a{color:var(–gold);text-decoration:none;}
+.setup-steps{background:var(–paper);border:1px solid var(–border);border-radius:4px;padding:0.9rem 1.1rem;margin-bottom:1.4rem;font-size:0.78rem;line-height:1.9;}
+.setup-steps a{color:var(–gold);text-decoration:none;}
+.form-group{margin-bottom:1rem;}
+.form-group label{display:block;font-family:‘DM Mono’,monospace;font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:var(–muted);margin-bottom:0.35rem;}
+.form-group input,.form-group select{width:100%;padding:0.7rem 0.9rem;border:1px solid var(–border);background:var(–paper);font-family:‘DM Mono’,monospace;font-size:0.78rem;color:var(–ink);border-radius:2px;outline:none;transition:border-color 0.2s;}
+.form-group input:focus,.form-group select:focus{border-color:var(–gold);}
+.modal-actions{display:flex;gap:0.6rem;margin-top:1.2rem;}
+.btn-primary{flex:1;padding:0.85rem;background:var(–ink);color:var(–gold);border:none;font-family:‘DM Mono’,monospace;font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;}
+.btn-secondary{padding:0.85rem 1.2rem;background:transparent;color:var(–muted);border:1px solid var(–border);font-family:‘DM Mono’,monospace;font-size:0.7rem;cursor:pointer;border-radius:2px;}
+
+/* MAIN */
+main{padding:1.5rem 2rem;max-width:1300px;margin:0 auto;}
+
+/* INTELLIGENCE PANEL */
+.intel-panel{background:var(–ink);border-radius:6px;padding:1.2rem 1.5rem;margin-bottom:1.5rem;display:none;}
+.intel-panel.visible{display:block;}
+.intel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;}
+.intel-title{font-family:‘DM Mono’,monospace;font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:var(–gold);}
+.intel-clear{font-family:‘DM Mono’,monospace;font-size:0.58rem;color:var(–muted);cursor:pointer;background:none;border:none;letter-spacing:0.08em;text-transform:uppercase;}
+.intel-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0.75rem;}
+.intel-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:4px;padding:0.8rem 1rem;cursor:pointer;transition:border-color 0.2s;}
+.intel-card:hover{border-color:var(–gold);}
+.intel-card-label{font-family:‘DM Mono’,monospace;font-size:0.55rem;letter-spacing:0.1em;text-transform:uppercase;color:var(–muted);margin-bottom:0.3rem;}
+.intel-card-value{font-family:‘Cormorant Garamond’,serif;font-size:1rem;color:#fff;font-weight:300;}
+.intel-card-sub{font-family:‘DM Mono’,monospace;font-size:0.58rem;color:var(–muted);margin-top:0.15rem;}
+
+/* TABS */
+.tabs{display:flex;border-bottom:2px solid var(–border);margin-bottom:1.5rem;}
+.tab{padding:0.75rem 1.5rem;font-family:‘DM Mono’,monospace;font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border:none;background:none;color:var(–muted);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all 0.2s;}
+.tab.active{color:var(–ink);border-bottom-color:var(–gold);font-weight:500;}
+.tab-content{display:none;}
+.tab-content.active{display:block;}
+
+/* SEARCH PANEL */
+.search-panel{background:var(–surface);border:1px solid var(–border);padding:1.5rem;margin-bottom:1.5rem;border-radius:6px;}
+.panel-title{font-family:‘Cormorant Garamond’,serif;font-size:1.2rem;font-weight:400;margin-bottom:1rem;display:flex;align-items:center;gap:0.6rem;}
+.badge{font-family:‘DM Mono’,monospace;font-size:0.55rem;background:var(–paper);border:1px solid var(–border);padding:0.18rem 0.55rem;border-radius:20px;color:var(–muted);}
+.pref-label{font-family:‘DM Mono’,monospace;font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:var(–muted);margin-bottom:0.45rem;}
+.chips-row{display:flex;gap:0.35rem;flex-wrap:wrap;margin-bottom:1.2rem;}
+.chip{padding:0.25rem 0.7rem;border:1px solid var(–border);border-radius:20px;font-family:‘DM Mono’,monospace;font-size:0.6rem;cursor:pointer;background:white;color:var(–muted);transition:all 0.15s;user-select:none;}
+.chip.active{background:var(–ink);color:var(–gold);border-color:var(–ink);}
+.chip.titanium{border-color:var(–titanium);color:var(–titanium);}
+.chip.titanium.active{background:var(–titanium);color:#fff;border-color:var(–titanium);}
+.search-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0.85rem;margin-bottom:1.2rem;}
+.search-row{display:flex;gap:0.85rem;margin-bottom:1rem;flex-wrap:wrap;}
+.toggle-row{display:flex;gap:0.75rem;align-items:center;margin-bottom:1.2rem;flex-wrap:wrap;}
+.toggle-btn{padding:0.3rem 0.8rem;font-family:‘DM Mono’,monospace;font-size:0.6rem;letter-spacing:0.06em;border:1px solid var(–border);background:white;color:var(–muted);cursor:pointer;border-radius:2px;transition:all 0.15s;}
+.toggle-btn.active{background:var(–ink);color:var(–gold);border-color:var(–ink);}
+.toggle-label{font-family:‘DM Mono’,monospace;font-size:0.6rem;color:var(–muted);letter-spacing:0.06em;}
+.search-btn{display:inline-flex;align-items:center;gap:0.4rem;padding:0.8rem 1.8rem;background:var(–gold);color:var(–ink);border:none;font-family:‘DM Mono’,monospace;font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;font-weight:500;transition:all 0.2s;}
+.search-btn:hover{background:var(–gold-light);}
+.search-btn:disabled{opacity:0.45;cursor:not-allowed;}
+
+/* QUICK ROUTES */
+.quick-routes{display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem;}
+.quick-route{padding:0.3rem 0.8rem;font-family:‘DM Mono’,monospace;font-size:0.6rem;border:1px solid var(–gold-light);background:var(–gold-dim);color:var(–ink);cursor:pointer;border-radius:20px;transition:all 0.15s;letter-spacing:0.04em;}
+.quick-route:hover{background:var(–gold);border-color:var(–gold);}
+
+/* LOADING */
+.loading{display:none;text-align:center;padding:2.5rem;}
+.loading.active{display:block;}
+.spinner{width:26px;height:26px;border:2px solid var(–border);border-top-color:var(–gold);border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto 0.8rem;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-text{font-family:‘DM Mono’,monospace;font-size:0.65rem;color:var(–muted);letter-spacing:0.1em;text-transform:uppercase;}
+
+/* RESULTS */
+.results-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.5rem;}
+.results-title{font-family:‘Cormorant Garamond’,serif;font-size:1.2rem;font-weight:400;}
+.results-meta{font-family:‘DM Mono’,monospace;font-size:0.6rem;color:var(–muted);}
+.sort-bar{display:flex;gap:0.4rem;margin-bottom:0.85rem;align-items:center;flex-wrap:wrap;}
+.sort-label{font-family:‘DM Mono’,monospace;font-size:0.6rem;color:var(–muted);letter-spacing:0.08em;text-transform:uppercase;margin-right:0.2rem;}
+.sort-btn{padding:0.25rem 0.65rem;font-family:‘DM Mono’,monospace;font-size:0.6rem;border:1px solid var(–border);background:white;color:var(–muted);cursor:pointer;border-radius:2px;transition:all 0.15s;}
+.sort-btn.active{background:var(–ink);color:var(–gold);border-color:var(–ink);}
+.price-insight{background:var(–ink);color:var(–gold-light);padding:0.65rem 1rem;border-radius:4px;margin-bottom:0.85rem;font-family:‘DM Mono’,monospace;font-size:0.65rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;}
+.insight-label{color:var(–muted);}
+
+/* RECOMMENDED SECTION */
+.rec-section{margin-bottom:1.5rem;}
+.rec-title{font-family:‘DM Mono’,monospace;font-size:0.62rem;letter-spacing:0.12em;text-transform:uppercase;color:var(–gold);margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem;}
+.rec-title::before{content:‘★’;font-size:0.55rem;}
+
+/* FLIGHT CARD */
+.flight-card{background:var(–surface);border:1px solid var(–border);border-radius:4px;padding:1.2rem 1.4rem;margin-bottom:0.5rem;display:grid;grid-template-columns:2.2rem 1fr auto auto;gap:1rem;align-items:center;animation:fadeUp 0.22s ease forwards;opacity:0;cursor:pointer;transition:border-color 0.2s,box-shadow 0.2s;}
+.flight-card.preferred{border-left:3px solid var(–gold);}
+.flight-card.recommended{border-left:3px solid var(–gold);background:linear-gradient(to right,rgba(201,168,76,0.03),transparent);}
+.flight-card:hover{border-color:var(–gold);box-shadow:0 3px 16px rgba(201,168,76,0.1);}
+.flight-card.selected-before{background:rgba(201,168,76,0.04);}
+@keyframes fadeUp{from{opacity:0;transform:translateY(5px);}to{opacity:1;transform:translateY(0);}}
+.airline-logo{width:2.2rem;height:2.2rem;object-fit:contain;border-radius:3px;background:var(–paper);padding:2px;}
+.airline-ph{width:2.2rem;height:2.2rem;background:var(–paper);border:1px solid var(–border);border-radius:3px;display:flex;align-items:center;justify-content:center;font-family:‘DM Mono’,monospace;font-size:0.5rem;color:var(–muted);}
+.flight-main{display:flex;align-items:center;gap:1rem;}
+.time-block{min-width:3.2rem;}
+.flight-time{font-family:‘Cormorant Garamond’,serif;font-size:1.4rem;font-weight:300;line-height:1;}
+.flight-apt{font-family:‘DM Mono’,monospace;font-size:0.55rem;color:var(–muted);margin-top:0.15rem;}
+.route-line{flex:1;display:flex;flex-direction:column;align-items:center;gap:0.2rem;}
+.route-dur{font-family:‘DM Mono’,monospace;font-size:0.58rem;color:var(–muted);}
+.route-bar{width:100%;height:1px;background:var(–border);position:relative;}
+.route-bar::before,.route-bar::after{content:’’;position:absolute;top:50%;transform:translateY(-50%);width:4px;height:4px;border-radius:50%;background:var(–gold);}
+.route-bar::before{left:0;}
+.route-bar::after{right:0;}
+.route-stops{font-family:‘DM Mono’,monospace;font-size:0.55rem;color:var(–muted);}
+.route-stops.direct{color:var(–success);}
+.flight-carrier{text-align:center;min-width:6.5rem;}
+.carrier-name{font-family:‘DM Mono’,monospace;font-size:0.65rem;font-weight:500;}
+.carrier-sub{font-size:0.6rem;color:var(–muted);margin-top:0.15rem;}
+.tag{display:inline-block;font-family:‘DM Mono’,monospace;font-size:0.5rem;padding:0.1rem 0.4rem;border-radius:20px;margin-top:0.25rem;}
+.tag.preferred{background:var(–gold);color:var(–ink);}
+.tag.delayed{background:rgba(192,57,43,0.12);color:var(–error);}
+.tag.picked{background:rgba(26,107,58,0.12);color:var(–success);}
+.flight-price{text-align:right;min-width:5.5rem;}
+.price-main{font-family:‘Cormorant Garamond’,serif;font-size:1.6rem;font-weight:300;line-height:1;}
+.price-sub{font-family:‘DM Mono’,monospace;font-size:0.55rem;color:var(–muted);margin-top:0.15rem;}
+
+/* HOTEL CARD */
+.hotel-card{background:var(–surface);border:1px solid var(–border);border-radius:4px;padding:1.2rem 1.4rem;margin-bottom:0.5rem;display:grid;grid-template-columns:1fr auto;gap:1.2rem;align-items:start;animation:fadeUp 0.22s ease forwards;opacity:0;cursor:pointer;transition:border-color 0.2s,box-shadow 0.2s;}
+.hotel-card.preferred{border-left:3px solid var(–gold);}
+.hotel-card.titanium-prop{border-left:3px solid var(–titanium);}
+.hotel-card.recommended{border-left:3px solid var(–gold);background:linear-gradient(to right,rgba(201,168,76,0.03),transparent);}
+.hotel-card:hover{border-color:var(–gold);box-shadow:0 3px 16px rgba(201,168,76,0.1);}
+.hotel-card.selected-before{background:rgba(201,168,76,0.04);}
+.hotel-name{font-family:‘Cormorant Garamond’,serif;font-size:1.15rem;font-weight:400;margin-bottom:0.15rem;}
+.hotel-brand{font-family:‘DM Mono’,monospace;font-size:0.58rem;color:var(–muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.5rem;}
+.hotel-meta{display:flex;gap:0.45rem;flex-wrap:wrap;align-items:center;}
+.stars{color:var(–gold);font-size:0.65rem;}
+.rating-badge{font-family:‘DM Mono’,monospace;font-size:0.58rem;background:var(–ink);color:var(–gold);padding:0.12rem 0.45rem;border-radius:3px;}
+.amenity-tag{font-family:‘DM Mono’,monospace;font-size:0.55rem;border:1px solid var(–border);padding:0.1rem 0.38rem;border-radius:2px;color:var(–muted);}
+.titanium-badge{font-family:‘DM Mono’,monospace;font-size:0.55rem;background:var(–titanium-bg);color:var(–titanium);border:1px solid var(–titanium);padding:0.1rem 0.5rem;border-radius:20px;}
+
+/* EMPTY / NO KEY */
+.empty-state{text-align:center;padding:2.5rem 2rem;border:1px dashed var(–border);border-radius:4px;}
+.empty-state p{font-family:‘Cormorant Garamond’,serif;font-size:1.1rem;font-style:italic;color:var(–muted);margin-bottom:0.35rem;}
+.empty-state small{font-family:‘DM Mono’,monospace;font-size:0.6rem;color:var(–muted);}
+.no-key-banner{background:var(–ink);border-radius:6px;padding:2.5rem;text-align:center;}
+.no-key-banner h3{font-family:‘Cormorant Garamond’,serif;font-size:1.6rem;font-weight:300;color:var(–gold);margin-bottom:0.5rem;}
+.no-key-banner p{font-size:0.82rem;color:#888;margin-bottom:1.2rem;line-height:1.6;}
+.no-key-banner button{background:var(–gold);color:var(–ink);border:none;padding:0.75rem 1.8rem;font-family:‘DM Mono’,monospace;font-size:0.7rem;letter-spacing:0.1em;cursor:pointer;border-radius:2px;font-weight:500;}
+
+/* SECTION DIVIDER */
+.section-divider{font-family:‘DM Mono’,monospace;font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:var(–muted);margin:1rem 0 0.6rem;padding-bottom:0.4rem;border-bottom:1px solid var(–border);}
+
+@media(max-width:768px){
+header{padding:1rem 1.2rem;}
+main{padding:1rem 1.2rem;}
+.flight-card{grid-template-columns:1fr;gap:0.75rem;}
+.hotel-card{grid-template-columns:1fr;}
+.search-grid{grid-template-columns:1fr 1fr;}
+.flight-main{flex-wrap:wrap;}
+.intel-grid{grid-template-columns:1fr 1fr;}
+}
 </style>
+
 </head>
 <body>
 
@@ -126,26 +198,24 @@
   <div class="logo">ST <span>Travel</span></div>
   <div class="header-right">
     <div class="api-status" id="apiStatus">● Not configured</div>
-    <button class="config-btn" onclick="openModal()">⚙ API Keys</button>
+    <button class="config-btn" onclick="openModal()">⚙ Keys</button>
   </div>
 </header>
+
+<!-- MODAL -->
 
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal">
     <h2>Configure SerpAPI</h2>
-    <p class="modal-subtitle">Sign up free at <a href="https://serpapi.com/users/sign_up" target="_blank">serpapi.com</a> — 100 free searches/month, no credit card needed. Keys stored locally in your browser only.</p>
-    <div class="steps">
-      <strong>3-minute setup:</strong><br>
-      1. Go to <a href="https://serpapi.com" target="_blank">serpapi.com</a> → Create free account<br>
+    <p class="modal-sub">Free at <a href="https://serpapi.com/users/sign_up" target="_blank">serpapi.com</a> — 100 searches/month, no credit card. Keys stored locally only.</p>
+    <div class="setup-steps">
+      <strong>Setup in 3 steps:</strong><br>
+      1. Go to <a href="https://serpapi.com" target="_blank">serpapi.com</a> → Sign up free<br>
       2. Dashboard → copy your <strong>API Key</strong><br>
       3. Paste below → Save
     </div>
-    <div class="form-group">
-      <label>SerpAPI Key</label>
-      <input type="password" id="serpApiKey" placeholder="Paste your SerpAPI key here" />
-    </div>
-    <div class="form-group">
-      <label>Currency</label>
+    <div class="form-group"><label>SerpAPI Key</label><input type="password" id="serpApiKey" placeholder="Paste your SerpAPI key"/></div>
+    <div class="form-group"><label>Currency</label>
       <select id="currency">
         <option value="GBP">GBP — British Pound (£)</option>
         <option value="USD">USD — US Dollar ($)</option>
@@ -153,8 +223,7 @@
         <option value="INR">INR — Indian Rupee (₹)</option>
       </select>
     </div>
-    <div class="form-group">
-      <label>Country (search localisation)</label>
+    <div class="form-group"><label>Country</label>
       <select id="country">
         <option value="uk">United Kingdom</option>
         <option value="us">United States</option>
@@ -170,137 +239,177 @@
 </div>
 
 <main>
+  <!-- INTELLIGENCE PANEL -->
+  <div class="intel-panel" id="intelPanel">
+    <div class="intel-header">
+      <div class="intel-title">✦ Your Travel Intelligence</div>
+      <button class="intel-clear" onclick="clearIntelligence()">Clear history</button>
+    </div>
+    <div class="intel-grid" id="intelGrid"></div>
+  </div>
+
   <div class="tabs">
     <button class="tab active" onclick="switchTab('flights',this)">✈ Flights</button>
     <button class="tab" onclick="switchTab('hotels',this)">⌂ Hotels</button>
   </div>
 
+  <!-- FLIGHTS -->
+
   <div class="tab-content active" id="tab-flights">
     <div class="search-panel">
-      <div class="panel-title">Flight Search <span class="quota-badge">100 searches/mo free</span></div>
-      <div class="pref-label">Preferred Airlines — floated to top of results</div>
-      <div class="chips-row" id="airlineChips">
-        <div class="chip active" data-val="British Airways">British Airways</div>
-        <div class="chip active" data-val="Virgin Atlantic">Virgin Atlantic</div>
-        <div class="chip active" data-val="IndiGo">IndiGo</div>
-        <div class="chip" data-val="Air India">Air India</div>
-        <div class="chip" data-val="Emirates">Emirates</div>
-        <div class="chip" data-val="Lufthansa">Lufthansa</div>
-        <div class="chip" data-val="Singapore Airlines">Singapore Airlines</div>
-        <div class="chip" data-val="Qatar Airways">Qatar Airways</div>
-        <div class="chip" data-val="KLM">KLM</div>
-      </div>
-      <div class="search-grid">
-        <div class="form-group">
-          <label>From (IATA)</label>
-          <input type="text" id="fOrigin" placeholder="LHR" maxlength="3" style="text-transform:uppercase" />
-        </div>
-        <div class="form-group">
-          <label>To (IATA)</label>
-          <input type="text" id="fDest" placeholder="DEL" maxlength="3" style="text-transform:uppercase" />
-        </div>
-        <div class="form-group">
-          <label>Departure Date</label>
-          <input type="date" id="fDate" />
-        </div>
-        <div class="form-group">
-          <label>Return Date (optional)</label>
-          <input type="date" id="fReturn" />
-        </div>
-        <div class="form-group">
-          <label>Adults</label>
-          <select id="fAdults">
-            <option value="1">1 Adult</option>
-            <option value="2">2 Adults</option>
-            <option value="3">3 Adults</option>
-            <option value="4">4 Adults</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Cabin Class</label>
-          <select id="fCabin">
-            <option value="1">Economy</option>
-            <option value="2">Premium Economy</option>
-            <option value="3" selected>Business</option>
-            <option value="4">First</option>
-          </select>
-        </div>
-      </div>
-      <button class="search-btn" id="searchFlightsBtn" onclick="searchFlights()">✈ Search Live Flights</button>
-    </div>
-    <div class="loading" id="flightLoading"><div class="spinner"></div><div class="loading-text">Fetching live fares from Google Flights...</div></div>
-    <div id="flightResults"></div>
+      <div class="panel-title">Flight Search <span class="badge">Google Flights · Live</span></div>
+
+```
+  <div id="quickRoutesSection" style="display:none">
+    <div class="pref-label">Quick Routes</div>
+    <div class="quick-routes" id="quickRoutes"></div>
   </div>
+
+  <div class="pref-label">Preferred Airlines</div>
+  <div class="chips-row" id="airlineChips">
+    <div class="chip active" data-val="British Airways">BA</div>
+    <div class="chip active" data-val="Virgin Atlantic">Virgin Atlantic</div>
+    <div class="chip active" data-val="IndiGo">IndiGo</div>
+    <div class="chip" data-val="Air India">Air India</div>
+    <div class="chip" data-val="Emirates">Emirates</div>
+    <div class="chip" data-val="Lufthansa">Lufthansa</div>
+    <div class="chip" data-val="Singapore Airlines">Singapore</div>
+    <div class="chip" data-val="Qatar Airways">Qatar</div>
+    <div class="chip" data-val="KLM">KLM</div>
+    <div class="chip" data-val="Air France">Air France</div>
+    <div class="chip" data-val="Turkish Airlines">Turkish</div>
+  </div>
+
+  <div class="search-grid">
+    <div class="form-group"><label>From (IATA)</label><input type="text" id="fOrigin" placeholder="LHR" maxlength="3" style="text-transform:uppercase"/></div>
+    <div class="form-group"><label>To (IATA)</label><input type="text" id="fDest" placeholder="DEL" maxlength="3" style="text-transform:uppercase"/></div>
+    <div class="form-group"><label>Departure</label><input type="date" id="fDate"/></div>
+    <div class="form-group"><label>Return (optional)</label><input type="date" id="fReturn"/></div>
+    <div class="form-group"><label>Adults</label>
+      <select id="fAdults"><option value="1">1 Adult</option><option value="2">2 Adults</option><option value="3">3 Adults</option><option value="4">4 Adults</option></select>
+    </div>
+    <div class="form-group"><label>Cabin</label>
+      <select id="fCabin"><option value="1">Economy</option><option value="2">Premium Economy</option><option value="3" selected>Business</option><option value="4">First</option></select>
+    </div>
+  </div>
+
+  <div class="toggle-row">
+    <span class="toggle-label">Filters:</span>
+    <button class="toggle-btn" id="directToggle" onclick="toggleFilter('direct')">Direct Only</button>
+    <button class="toggle-btn" id="preferredToggle" onclick="toggleFilter('preferred')">Preferred Airlines Only</button>
+  </div>
+
+  <button class="search-btn" id="searchFlightsBtn" onclick="searchFlights()">✈ Search Live Flights</button>
+</div>
+<div class="loading" id="flightLoading"><div class="spinner"></div><div class="loading-text">Fetching live fares...</div></div>
+<div id="flightResults"></div>
+```
+
+  </div>
+
+  <!-- HOTELS -->
 
   <div class="tab-content" id="tab-hotels">
     <div class="search-panel">
-      <div class="panel-title">Hotel Search <span class="quota-badge">Powered by Google Hotels</span></div>
-      <div class="pref-label">Preferred Chains — floated to top</div>
-      <div class="chips-row" id="hotelChips">
-        <div class="chip active" data-val="Marriott">Marriott</div>
-        <div class="chip active" data-val="Courtyard">Courtyard</div>
-        <div class="chip active" data-val="Sheraton">Sheraton</div>
-        <div class="chip active" data-val="W Hotels">W Hotels</div>
-        <div class="chip active" data-val="Ritz-Carlton">Ritz-Carlton</div>
-        <div class="chip active" data-val="Autograph">Autograph</div>
-        <div class="chip" data-val="Hilton">Hilton</div>
-        <div class="chip" data-val="Hyatt">Hyatt</div>
-        <div class="chip" data-val="InterContinental">InterContinental</div>
-      </div>
-      <div class="search-grid">
-        <div class="form-group" style="grid-column:span 2">
-          <label>City or Destination</label>
-          <input type="text" id="hLocation" placeholder="e.g. Delhi, Jabalpur, London Heathrow" />
-        </div>
-        <div class="form-group">
-          <label>Check-in</label>
-          <input type="date" id="hCheckin" />
-        </div>
-        <div class="form-group">
-          <label>Check-out</label>
-          <input type="date" id="hCheckout" />
-        </div>
-        <div class="form-group">
-          <label>Adults</label>
-          <select id="hAdults">
-            <option value="1">1 Adult</option>
-            <option value="2" selected>2 Adults</option>
-            <option value="3">3 Adults</option>
-            <option value="4">4 Adults</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Min Star Rating</label>
-          <select id="hStars">
-            <option value="">Any rating</option>
-            <option value="3">3★+</option>
-            <option value="4">4★+</option>
-            <option value="5">5★ only</option>
-          </select>
-        </div>
-      </div>
-      <button class="search-btn" id="searchHotelsBtn" onclick="searchHotels()">⌂ Search Live Hotels</button>
+      <div class="panel-title">Hotel Search <span class="badge">Google Hotels · Live</span></div>
+
+```
+  <div class="pref-label">Preferred Chains <span style="color:var(--titanium);font-size:0.55rem;margin-left:0.3rem;">◆ Titanium</span></div>
+  <div class="chips-row" id="hotelChips">
+    <!-- Marriott Family -->
+    <div class="chip titanium active" data-val="Marriott" data-chain="marriott">Marriott</div>
+    <div class="chip titanium active" data-val="Courtyard" data-chain="marriott">Courtyard</div>
+    <div class="chip titanium active" data-val="Sheraton" data-chain="marriott">Sheraton</div>
+    <div class="chip titanium active" data-val="W Hotels" data-chain="marriott">W Hotels</div>
+    <div class="chip titanium active" data-val="Ritz-Carlton" data-chain="marriott">Ritz-Carlton</div>
+    <div class="chip titanium active" data-val="Autograph" data-chain="marriott">Autograph</div>
+    <div class="chip titanium active" data-val="Renaissance" data-chain="marriott">Renaissance</div>
+    <div class="chip titanium active" data-val="Westin" data-chain="marriott">Westin</div>
+    <!-- Hilton -->
+    <div class="chip" data-val="Hilton" data-chain="hilton">Hilton</div>
+    <div class="chip" data-val="Conrad" data-chain="hilton">Conrad</div>
+    <div class="chip" data-val="DoubleTree" data-chain="hilton">DoubleTree</div>
+    <div class="chip" data-val="Hampton Inn" data-chain="hilton">Hampton</div>
+    <!-- IHG -->
+    <div class="chip" data-val="InterContinental" data-chain="ihg">InterContinental</div>
+    <div class="chip" data-val="Kimpton" data-chain="ihg">Kimpton</div>
+    <div class="chip" data-val="Holiday Inn" data-chain="ihg">Holiday Inn</div>
+    <!-- Hyatt -->
+    <div class="chip" data-val="Hyatt" data-chain="hyatt">Hyatt</div>
+    <div class="chip" data-val="Park Hyatt" data-chain="hyatt">Park Hyatt</div>
+    <!-- Other -->
+    <div class="chip" data-val="Four Seasons" data-chain="fs">Four Seasons</div>
+    <div class="chip" data-val="Accor" data-chain="accor">Accor</div>
+    <div class="chip" data-val="Sofitel" data-chain="accor">Sofitel</div>
+  </div>
+
+  <div class="search-grid">
+    <div class="form-group" style="grid-column:span 2"><label>City or Destination</label><input type="text" id="hLocation" placeholder="e.g. Delhi, London, Jabalpur"/></div>
+    <div class="form-group"><label>Check-in</label><input type="date" id="hCheckin"/></div>
+    <div class="form-group"><label>Check-out</label><input type="date" id="hCheckout"/></div>
+    <div class="form-group"><label>Adults</label>
+      <select id="hAdults"><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option><option value="4">4</option></select>
     </div>
-    <div class="loading" id="hotelLoading"><div class="spinner"></div><div class="loading-text">Fetching live rates from Google Hotels...</div></div>
-    <div id="hotelResults"></div>
+    <div class="form-group"><label>Min Stars</label>
+      <select id="hStars"><option value="">Any</option><option value="3">3★+</option><option value="4">4★+</option><option value="5">5★</option></select>
+    </div>
+  </div>
+
+  <div class="toggle-row">
+    <span class="toggle-label">Show:</span>
+    <button class="toggle-btn active" id="marriottToggle" onclick="toggleHotelFilter('marriott')">◆ Marriott / Titanium First</button>
+    <button class="toggle-btn" id="ratingToggle" onclick="toggleHotelFilter('rating')">Highest Rated</button>
+    <button class="toggle-btn" id="priceToggle" onclick="toggleHotelFilter('price')">Lowest Price</button>
+  </div>
+
+  <button class="search-btn" id="searchHotelsBtn" onclick="searchHotels()">⌂ Search Live Hotels</button>
+</div>
+<div class="loading" id="hotelLoading"><div class="spinner"></div><div class="loading-text">Fetching live rates...</div></div>
+<div id="hotelResults"></div>
+```
+
   </div>
 </main>
 
 <script>
+// ─── Config & State ───────────────────────────────────────────────────────────
 let config = { apiKey:'', currency:'GBP', country:'uk' };
+let filters = { direct: false, preferredOnly: false };
+let hotelSort = 'marriott';
 
+// Intelligence / Preference Store
+let prefs = {
+  routes: {},       // { "LHR-DEL": { count, lastDate } }
+  airlines: {},     // { "British Airways": count }
+  hotelChains: {},  // { "Marriott": count }
+  hotels: {},       // { "hotelName": { count, location } }
+  avgCabin: [],     // cabin selections
+  lastSearches: []  // last 5 searches
+};
+
+const MARRIOTT_CHAINS = ['marriott','courtyard','sheraton','w hotels','ritz-carlton','autograph','renaissance','westin','st. regis','le méridien','four points','element','aloft','moxy','tribute','design hotels'];
+const SERPAPI = 'https://serpapi.com/search.json';
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
 window.onload = () => {
-  const saved = localStorage.getItem('st_travel_v2');
-  if (saved) { config = {...config, ...JSON.parse(saved)}; updateStatus(true); }
+  const savedConfig = localStorage.getItem('st_travel_v3');
+  if (savedConfig) { config = {...config, ...JSON.parse(savedConfig)}; updateStatus(true); }
+  const savedPrefs = localStorage.getItem('st_travel_prefs');
+  if (savedPrefs) { prefs = {...prefs, ...JSON.parse(savedPrefs)}; }
+
   const fmt = d => d.toISOString().split('T')[0];
   const today = new Date();
   const tomorrow = new Date(today); tomorrow.setDate(today.getDate()+1);
   document.getElementById('fDate').value = fmt(today);
   document.getElementById('hCheckin').value = fmt(today);
   document.getElementById('hCheckout').value = fmt(tomorrow);
+
   document.querySelectorAll('.chip').forEach(c => c.addEventListener('click', () => c.classList.toggle('active')));
+  renderIntelPanel();
+  renderQuickRoutes();
 };
 
+// ─── Config Modal ─────────────────────────────────────────────────────────────
 function openModal() {
   document.getElementById('modalOverlay').classList.add('open');
   if (config.apiKey) {
@@ -310,32 +419,156 @@ function openModal() {
   }
 }
 function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
-
 function saveConfig() {
   const key = document.getElementById('serpApiKey').value.trim();
   if (!key) { alert('Please enter your SerpAPI key'); return; }
   config.apiKey = key;
   config.currency = document.getElementById('currency').value;
   config.country = document.getElementById('country').value;
-  localStorage.setItem('st_travel_v2', JSON.stringify(config));
+  localStorage.setItem('st_travel_v3', JSON.stringify(config));
   updateStatus(true);
   closeModal();
 }
-
 function updateStatus(ok) {
   const el = document.getElementById('apiStatus');
   el.textContent = ok ? '● Connected' : '● Not configured';
   el.className = 'api-status' + (ok ? ' connected' : '');
 }
 
+// ─── Intelligence Engine ──────────────────────────────────────────────────────
+function savePrefs() { localStorage.setItem('st_travel_prefs', JSON.stringify(prefs)); }
+
+function trackSearch(type, data) {
+  if (type === 'flight') {
+    const key = `${data.origin}-${data.dest}`;
+    if (!prefs.routes[key]) prefs.routes[key] = { count:0, lastDate:'', origin:data.origin, dest:data.dest };
+    prefs.routes[key].count++;
+    prefs.routes[key].lastDate = data.date;
+  }
+  savePrefs();
+  renderIntelPanel();
+  renderQuickRoutes();
+}
+
+function trackSelection(type, data) {
+  if (type === 'flight') {
+    const airline = data.airline;
+    if (airline) { prefs.airlines[airline] = (prefs.airlines[airline]||0) + 1; }
+  }
+  if (type === 'hotel') {
+    const chain = data.chain;
+    const name = data.name;
+    if (chain) { prefs.hotelChains[chain] = (prefs.hotelChains[chain]||0) + 1; }
+    if (name) { prefs.hotels[name] = { count: (prefs.hotels[name]?.count||0)+1, location: data.location }; }
+  }
+  savePrefs();
+  renderIntelPanel();
+}
+
+function clearIntelligence() {
+  prefs = { routes:{}, airlines:{}, hotelChains:{}, hotels:{}, avgCabin:[], lastSearches:[] };
+  savePrefs();
+  renderIntelPanel();
+  renderQuickRoutes();
+}
+
+function renderIntelPanel() {
+  const panel = document.getElementById('intelPanel');
+  const grid = document.getElementById('intelGrid');
+  const hasData = Object.keys(prefs.routes).length > 0 || Object.keys(prefs.airlines).length > 0 || Object.keys(prefs.hotelChains).length > 0;
+  if (!hasData) { panel.classList.remove('visible'); return; }
+  panel.classList.add('visible');
+
+  const cards = [];
+
+  // Top route
+  const topRoute = Object.entries(prefs.routes).sort((a,b) => b[1].count - a[1].count)[0];
+  if (topRoute) {
+    cards.push(`<div class="intel-card" onclick="loadRoute('${topRoute[1].origin}','${topRoute[1].dest}')">
+      <div class="intel-card-label">Frequent Route</div>
+      <div class="intel-card-value">${topRoute[1].origin} → ${topRoute[1].dest}</div>
+      <div class="intel-card-sub">Searched ${topRoute[1].count}× · tap to load</div>
+    </div>`);
+  }
+
+  // Top airline
+  const topAirline = Object.entries(prefs.airlines).sort((a,b) => b[1]-a[1])[0];
+  if (topAirline) {
+    cards.push(`<div class="intel-card">
+      <div class="intel-card-label">Preferred Airline</div>
+      <div class="intel-card-value">${topAirline[0]}</div>
+      <div class="intel-card-sub">Selected ${topAirline[1]}×</div>
+    </div>`);
+  }
+
+  // Top hotel chain
+  const topChain = Object.entries(prefs.hotelChains).sort((a,b) => b[1]-a[1])[0];
+  if (topChain) {
+    cards.push(`<div class="intel-card">
+      <div class="intel-card-label">Preferred Chain</div>
+      <div class="intel-card-value">${topChain[0]}</div>
+      <div class="intel-card-sub">Selected ${topChain[1]}×</div>
+    </div>`);
+  }
+
+  // Total searches
+  const totalSearches = Object.values(prefs.routes).reduce((a,b) => a + b.count, 0);
+  if (totalSearches > 0) {
+    cards.push(`<div class="intel-card">
+      <div class="intel-card-label">Total Searches</div>
+      <div class="intel-card-value">${totalSearches}</div>
+      <div class="intel-card-sub">${Object.keys(prefs.routes).length} unique routes</div>
+    </div>`);
+  }
+
+  grid.innerHTML = cards.join('');
+}
+
+function renderQuickRoutes() {
+  const section = document.getElementById('quickRoutesSection');
+  const container = document.getElementById('quickRoutes');
+  const routes = Object.entries(prefs.routes).sort((a,b) => b[1].count - a[1].count).slice(0,5);
+  if (!routes.length) { section.style.display='none'; return; }
+  section.style.display='block';
+  container.innerHTML = routes.map(([key, r]) =>
+    `<div class="quick-route" onclick="loadRoute('${r.origin}','${r.dest}')">${r.origin} → ${r.dest} <span style="opacity:0.6">(${r.count}×)</span></div>`
+  ).join('');
+}
+
+function loadRoute(origin, dest) {
+  document.getElementById('fOrigin').value = origin;
+  document.getElementById('fDest').value = dest;
+  document.querySelector('.tab[onclick*="flights"]').click();
+}
+
+// ─── Filters ──────────────────────────────────────────────────────────────────
+function toggleFilter(type) {
+  if (type === 'direct') {
+    filters.direct = !filters.direct;
+    document.getElementById('directToggle').classList.toggle('active', filters.direct);
+  }
+  if (type === 'preferred') {
+    filters.preferredOnly = !filters.preferredOnly;
+    document.getElementById('preferredToggle').classList.toggle('active', filters.preferredOnly);
+  }
+}
+
+function toggleHotelFilter(type) {
+  hotelSort = type;
+  document.querySelectorAll('#tab-hotels .toggle-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(type+'Toggle').classList.add('active');
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 function getChips(id) { return [...document.querySelectorAll(`#${id} .chip.active`)].map(c => c.dataset.val); }
 function fmtTime(str) { if (!str) return '—'; const p = str.split(' '); return p[p.length-1].slice(0,5); }
 function fmtDur(mins) { if (!mins) return ''; return `${Math.floor(mins/60)}h ${mins%60}m`; }
-
 function noKey() {
-  return `<div class="no-key-banner"><h3>API Key Required</h3><p>Connect your free SerpAPI key to fetch live flight and hotel prices.<br>Sign up at serpapi.com — 100 searches/month free, no credit card.</p><button onclick="openModal()">Configure API Key</button></div>`;
+  return `<div class="no-key-banner"><h3>API Key Required</h3><p>Connect your free SerpAPI key to fetch live prices.<br>Sign up at serpapi.com — 100 searches/month, no credit card.</p><button onclick="openModal()">Configure Key</button></div>`;
 }
+function isMarriott(name) { return MARRIOTT_CHAINS.some(c => (name||'').toLowerCase().includes(c)); }
 
+// ─── Flights ──────────────────────────────────────────────────────────────────
 async function searchFlights() {
   if (!config.apiKey) { document.getElementById('flightResults').innerHTML = noKey(); return; }
   const origin = document.getElementById('fOrigin').value.trim().toUpperCase();
@@ -346,20 +579,28 @@ async function searchFlights() {
   const cabin  = document.getElementById('fCabin').value;
   if (!origin || !dest || !date) { alert('Please enter origin, destination and date'); return; }
 
+  trackSearch('flight', { origin, dest, date });
+
   const btn = document.getElementById('searchFlightsBtn');
   btn.disabled = true;
   document.getElementById('flightLoading').classList.add('active');
   document.getElementById('flightResults').innerHTML = '';
 
-  const p = new URLSearchParams({ engine:'google_flights', departure_id:origin, arrival_id:dest, outbound_date:date, travel_class:cabin, adults, currency:config.currency, gl:config.country, hl:'en', api_key:config.apiKey, type: ret ? '1' : '2' });
+  const p = new URLSearchParams({ engine:'google_flights', departure_id:origin, arrival_id:dest, outbound_date:date, travel_class:cabin, adults, currency:config.currency, gl:config.country, hl:'en', api_key:config.apiKey, type: ret?'1':'2' });
   if (ret) p.append('return_date', ret);
 
   try {
-    const res = await fetch('https://serpapi.com/search.json?' + p);
+    const res = await fetch(`${SERPAPI}?${p}`);
     const data = await res.json();
     if (data.error) throw new Error(data.error);
-    const all = [...(data.best_flights||[]), ...(data.other_flights||[])];
-    renderFlights(all, getChips('airlineChips'), origin, dest, data.price_insights);
+    let all = [...(data.best_flights||[]), ...(data.other_flights||[])];
+
+    // Apply filters
+    if (filters.direct) all = all.filter(f => f.flights?.length === 1);
+    const preferred = getChips('airlineChips');
+    if (filters.preferredOnly) all = all.filter(f => preferred.some(p => (f.flights?.[0]?.airline||'').toLowerCase().includes(p.toLowerCase())));
+
+    renderFlights(all, preferred, origin, dest, data.price_insights);
   } catch(e) {
     document.getElementById('flightResults').innerHTML = `<div class="empty-state"><p>Search failed</p><small>${e.message}</small></div>`;
   } finally {
@@ -368,66 +609,151 @@ async function searchFlights() {
   }
 }
 
-function renderFlights(flights, preferred, origin, dest, insights) {
-  const container = document.getElementById('flightResults');
-  if (!flights.length) { container.innerHTML = `<div class="empty-state"><p>No flights found</p><small>Try different dates or check IATA codes.</small></div>`; return; }
+let currentFlights = [];
+let currentFlightPreferred = [];
 
-  flights.sort((a,b) => {
-    const aA = a.flights?.[0]?.airline || '';
-    const bA = b.flights?.[0]?.airline || '';
-    const ap = preferred.some(p => aA.toLowerCase().includes(p.toLowerCase())) ? 0 : 1;
-    const bp = preferred.some(p => bA.toLowerCase().includes(p.toLowerCase())) ? 0 : 1;
-    if (ap !== bp) return ap - bp;
-    return (a.price||0) - (b.price||0);
+function renderFlights(flights, preferred, origin, dest, insights) {
+  currentFlights = flights;
+  currentFlightPreferred = preferred;
+  const container = document.getElementById('flightResults');
+
+  if (!flights.length) {
+    container.innerHTML = `<div class="empty-state"><p>No flights found</p><small>Try different dates or remove filters.</small></div>`;
+    return;
+  }
+
+  // Score each flight
+  flights.forEach(f => {
+    const airline = f.flights?.[0]?.airline || '';
+    const isPref = preferred.some(p => airline.toLowerCase().includes(p.toLowerCase()));
+    const prevSelected = (prefs.airlines[airline]||0);
+    f._score = (isPref ? 10 : 0) + prevSelected * 3 - (f.flights?.length > 1 ? 2 : 0);
   });
 
-  let html = `<div class="results-header"><div class="results-title">${origin} → ${dest}</div><div class="results-meta">${flights.length} options · Live from Google Flights</div></div>`;
-  if (insights) {
-    html += `<div class="price-insight">📊 <span><span class="insight-label">Price level: </span>${insights.price_level||''}</span>${insights.lowest_price?`<span><span class="insight-label">Lowest: </span>${config.currency} ${insights.lowest_price.toLocaleString()}</span>`:''} ${insights.typical_price_range?`<span><span class="insight-label">Typical: </span>${config.currency} ${insights.typical_price_range[0].toLocaleString()} – ${insights.typical_price_range[1].toLocaleString()}</span>`:''}</div>`;
-  }
-  container.innerHTML = html;
+  // Default sort: score then price
+  flights.sort((a,b) => b._score - a._score || (a.price||0)-(b.price||0));
 
-  flights.forEach((offer, i) => {
-    const segs = offer.flights || [];
-    if (!segs.length) return;
-    const first = segs[0], last = segs[segs.length-1];
-    const airline = first.airline || '';
-    const isPref = preferred.some(p => airline.toLowerCase().includes(p.toLowerCase()));
-    const stops = segs.length - 1;
+  let html = `<div class="results-header">
+    <div class="results-title">${origin} → ${dest}</div>
+    <div class="results-meta">${flights.length} options · Live</div>
+  </div>
+  <div class="sort-bar">
+    <span class="sort-label">Sort:</span>
+    <button class="sort-btn active" onclick="sortFlights('smart',this)">✦ Smart</button>
+    <button class="sort-btn" onclick="sortFlights('price',this)">Lowest Price</button>
+    <button class="sort-btn" onclick="sortFlights('duration',this)">Shortest</button>
+    <button class="sort-btn" onclick="sortFlights('preferred',this)">Preferred First</button>
+  </div>`;
+
+  if (insights) {
+    html += `<div class="price-insight">📊
+      <span><span class="insight-label">Level: </span>${insights.price_level||''}</span>
+      ${insights.lowest_price?`<span><span class="insight-label">Lowest: </span>${config.currency} ${insights.lowest_price.toLocaleString()}</span>`:''}
+      ${insights.typical_price_range?`<span><span class="insight-label">Typical: </span>${config.currency} ${insights.typical_price_range[0].toLocaleString()}–${insights.typical_price_range[1].toLocaleString()}</span>`:''}
+    </div>`;
+  }
+
+  // Recommended (top 2 by score, only if score > 8)
+  const recommended = flights.filter(f => f._score > 8).slice(0,2);
+  if (recommended.length) {
+    html += `<div class="rec-section"><div class="rec-title">Recommended for You</div>`;
+    html += recommended.map((f,i) => buildFlightCard(f, preferred, true, i)).join('');
+    html += `</div><div class="section-divider">All Flights</div>`;
+  }
+
+  container.innerHTML = html;
+  flights.forEach((f,i) => {
     const card = document.createElement('div');
-    card.className = `flight-card${isPref?' preferred':''}`;
-    card.style.animationDelay = `${i*0.04}s`;
-    card.innerHTML = `
-      ${first.airline_logo ? `<img class="airline-logo" src="${first.airline_logo}" alt="${airline}" onerror="this.style.display='none'">` : `<div class="airline-placeholder">${airline.slice(0,3)}</div>`}
-      <div class="flight-main">
-        <div class="time-block">
-          <div class="flight-time">${fmtTime(first.departure_airport?.time)}</div>
-          <div class="flight-airport">${first.departure_airport?.id||origin}</div>
-        </div>
-        <div class="route-line">
-          <div class="route-duration">${fmtDur(offer.total_duration)}</div>
-          <div class="route-bar"></div>
-          <div class="route-stops ${stops===0?'direct':''}">${stops===0?'Direct':`${stops} stop${stops>1?'s':''}`}</div>
-        </div>
-        <div class="time-block">
-          <div class="flight-time">${fmtTime(last.arrival_airport?.time)}</div>
-          <div class="flight-airport">${last.arrival_airport?.id||dest}</div>
-        </div>
-      </div>
-      <div class="flight-carrier">
-        <div class="carrier-name">${airline}</div>
-        <div class="carrier-sub">${first.flight_number||''}${first.travel_class?' · '+first.travel_class:''}</div>
-        ${isPref ? '<div class="preferred-tag">★ Preferred</div>' : ''}
-        ${first.often_delayed_by_over_30_min ? '<div class="delayed-tag">Often delayed</div>' : ''}
-      </div>
-      <div class="flight-price">
-        <div class="price-main">${offer.price ? offer.price.toLocaleString() : '—'}</div>
-        <div class="price-sub">${config.currency} per person</div>
-      </div>`;
-    container.appendChild(card);
+    card.outerHTML; // placeholder
+    container.insertAdjacentHTML('beforeend', buildFlightCard(f, preferred, false, i));
+  });
+
+  // Add click handlers
+  container.querySelectorAll('.flight-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const airline = card.dataset.airline;
+      if (airline) trackSelection('flight', { airline });
+    });
   });
 }
 
+function buildFlightCard(offer, preferred, isRec, i) {
+  const segs = offer.flights || [];
+  if (!segs.length) return '';
+  const first = segs[0], last = segs[segs.length-1];
+  const airline = first.airline || '';
+  const isPref = preferred.some(p => airline.toLowerCase().includes(p.toLowerCase()));
+  const wasSelected = (prefs.airlines[airline]||0) > 0;
+  const stops = segs.length - 1;
+  let cls = 'flight-card';
+  if (isRec) cls += ' recommended';
+  else if (isPref) cls += ' preferred';
+  if (wasSelected) cls += ' selected-before';
+
+  return `<div class="${cls}" style="animation-delay:${i*0.03}s" data-airline="${airline}">
+    ${first.airline_logo ? `<img class="airline-logo" src="${first.airline_logo}" alt="${airline}" onerror="this.style.display='none'">` : `<div class="airline-ph">${airline.slice(0,3)}</div>`}
+    <div class="flight-main">
+      <div class="time-block">
+        <div class="flight-time">${fmtTime(first.departure_airport?.time)}</div>
+        <div class="flight-apt">${first.departure_airport?.id||''}</div>
+      </div>
+      <div class="route-line">
+        <div class="route-dur">${fmtDur(offer.total_duration)}</div>
+        <div class="route-bar"></div>
+        <div class="route-stops ${stops===0?'direct':''}">${stops===0?'Direct':`${stops} stop${stops>1?'s':''}`}</div>
+      </div>
+      <div class="time-block">
+        <div class="flight-time">${fmtTime(last.arrival_airport?.time)}</div>
+        <div class="flight-apt">${last.arrival_airport?.id||''}</div>
+      </div>
+    </div>
+    <div class="flight-carrier">
+      <div class="carrier-name">${airline}</div>
+      <div class="carrier-sub">${first.flight_number||''}${first.travel_class?' · '+first.travel_class:''}</div>
+      ${isRec ? '<span class="tag preferred">★ Recommended</span>' : isPref ? '<span class="tag preferred">★ Preferred</span>' : ''}
+      ${wasSelected && !isRec ? '<span class="tag picked">✓ Previously picked</span>' : ''}
+      ${first.often_delayed_by_over_30_min ? '<span class="tag delayed">Often delayed</span>' : ''}
+    </div>
+    <div class="flight-price">
+      <div class="price-main">${offer.price ? offer.price.toLocaleString() : '—'}</div>
+      <div class="price-sub">${config.currency} / person</div>
+    </div>
+  </div>`;
+}
+
+function sortFlights(by, btn) {
+  document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const flights = [...currentFlights];
+  if (by === 'price') flights.sort((a,b) => (a.price||0)-(b.price||0));
+  else if (by === 'duration') flights.sort((a,b) => (a.total_duration||999)-(b.total_duration||999));
+  else if (by === 'preferred') flights.sort((a,b) => {
+    const ap = currentFlightPreferred.some(p => (a.flights?.[0]?.airline||'').toLowerCase().includes(p.toLowerCase())) ? 0:1;
+    const bp = currentFlightPreferred.some(p => (b.flights?.[0]?.airline||'').toLowerCase().includes(p.toLowerCase())) ? 0:1;
+    return ap - bp;
+  });
+  else flights.sort((a,b) => b._score - a._score || (a.price||0)-(b.price||0));
+
+  // Re-render just the cards below the rec section
+  const container = document.getElementById('flightResults');
+  const existing = container.querySelectorAll('.flight-card:not(.recommended)');
+  existing.forEach(c => c.remove());
+  const divider = container.querySelector('.section-divider');
+  flights.forEach((f,i) => {
+    const html = buildFlightCard(f, currentFlightPreferred, false, i);
+    if (divider) divider.insertAdjacentHTML('afterend', html);
+    else container.insertAdjacentHTML('beforeend', html);
+  });
+
+  container.querySelectorAll('.flight-card:not(.recommended)').forEach(card => {
+    card.addEventListener('click', () => {
+      const airline = card.dataset.airline;
+      if (airline) trackSelection('flight', { airline });
+    });
+  });
+}
+
+// ─── Hotels ───────────────────────────────────────────────────────────────────
 async function searchHotels() {
   if (!config.apiKey) { document.getElementById('hotelResults').innerHTML = noKey(); return; }
   const location = document.getElementById('hLocation').value.trim();
@@ -446,7 +772,7 @@ async function searchHotels() {
   if (stars) p.append('hotel_class', stars);
 
   try {
-    const res = await fetch('https://serpapi.com/search.json?' + p);
+    const res = await fetch(`${SERPAPI}?${p}`);
     const data = await res.json();
     if (data.error) throw new Error(data.error);
     renderHotels(data.properties||[], getChips('hotelChips'), location, checkin, checkout);
@@ -460,47 +786,91 @@ async function searchHotels() {
 
 function renderHotels(props, preferred, location, checkin, checkout) {
   const container = document.getElementById('hotelResults');
-  if (!props.length) { container.innerHTML = `<div class="empty-state"><p>No hotels found for "${location}"</p><small>Try a broader city name.</small></div>`; return; }
-
+  if (!props.length) { container.innerHTML = `<div class="empty-state"><p>No hotels found</p><small>Try a broader search.</small></div>`; return; }
   const nights = Math.round((new Date(checkout)-new Date(checkin))/86400000);
-  props.sort((a,b) => {
-    const an = (a.name||'').toLowerCase(), bn = (b.name||'').toLowerCase();
-    const ap = preferred.some(p => an.includes(p.toLowerCase())) ? 0 : 1;
-    const bp = preferred.some(p => bn.includes(p.toLowerCase())) ? 0 : 1;
-    if (ap !== bp) return ap - bp;
-    return (a.rate_per_night?.lowest||0) - (b.rate_per_night?.lowest||0);
+
+  // Score hotels
+  props.forEach(h => {
+    const name = (h.name||'').toLowerCase();
+    const isTitanium = isMarriott(name);
+    const isPref = preferred.some(p => name.includes(p.toLowerCase()));
+    const wasSelected = (prefs.hotels[h.name]?.count||0);
+    const chainBoost = Object.entries(prefs.hotelChains).reduce((acc,[chain,cnt]) => name.includes(chain.toLowerCase()) ? acc+cnt*2 : acc, 0);
+    h._titanium = isTitanium;
+    h._preferred = isPref;
+    h._score = (isTitanium?15:0) + (isPref?10:0) + wasSelected*5 + chainBoost + (h.overall_rating||0)*0.5;
+    h._wasSelected = wasSelected > 0;
   });
 
-  container.innerHTML = `<div class="results-header"><div class="results-title">${location}</div><div class="results-meta">${props.length} properties · ${nights} night${nights!==1?'s':''} · Google Hotels</div></div>`;
+  // Sort
+  if (hotelSort === 'marriott') props.sort((a,b) => b._score - a._score || (a.rate_per_night?.lowest||0)-(b.rate_per_night?.lowest||0));
+  else if (hotelSort === 'rating') props.sort((a,b) => (b.overall_rating||0)-(a.overall_rating||0));
+  else if (hotelSort === 'price') props.sort((a,b) => (a.rate_per_night?.lowest||0)-(b.rate_per_night?.lowest||0));
 
-  props.forEach((h, i) => {
-    const isPref = preferred.some(p => (h.name||'').toLowerCase().includes(p.toLowerCase()));
-    const stars = h.hotel_class ? parseInt(h.hotel_class) : 0;
-    const card = document.createElement('div');
-    card.className = `hotel-card${isPref?' preferred':''}`;
-    card.style.animationDelay = `${i*0.04}s`;
-    card.innerHTML = `
-      <div>
-        <div class="hotel-name">${h.name||'Hotel'}</div>
-        <div class="hotel-brand">${isPref?'★ Preferred · ':''}${h.type||''}</div>
-        <div class="hotel-meta">
-          ${stars ? `<span class="stars">${'★'.repeat(stars)}</span>` : ''}
-          ${h.overall_rating ? `<span class="rating-badge">${h.overall_rating}/5</span>` : ''}
-          ${h.reviews ? `<span class="amenity-tag">${h.reviews.toLocaleString()} reviews</span>` : ''}
-          ${h.check_in_time ? `<span class="amenity-tag">In: ${h.check_in_time}</span>` : ''}
-          ${h.check_out_time ? `<span class="amenity-tag">Out: ${h.check_out_time}</span>` : ''}
-          ${(h.amenities||[]).slice(0,3).map(a=>`<span class="amenity-tag">${a}</span>`).join('')}
-        </div>
-      </div>
-      <div class="flight-price" style="min-width:7.5rem">
-        <div class="price-main">${h.rate_per_night?.lowest ? h.rate_per_night.lowest.toLocaleString() : '—'}</div>
-        <div class="price-sub">${config.currency} / night</div>
-        ${h.total_rate?.lowest ? `<div class="price-total">${h.total_rate.lowest.toLocaleString()} total</div>` : ''}
-      </div>`;
-    container.appendChild(card);
+  let html = `<div class="results-header">
+    <div class="results-title">${location}</div>
+    <div class="results-meta">${props.length} properties · ${nights} night${nights!==1?'s':''}</div>
+  </div>`;
+
+  // Recommended (top 3 by score if score > 12)
+  const recommended = props.filter(h => h._score > 12).slice(0,3);
+  if (recommended.length) {
+    html += `<div class="rec-section"><div class="rec-title">Recommended for You</div>`;
+    html += recommended.map((h,i) => buildHotelCard(h, true, i, nights)).join('');
+    html += `</div><div class="section-divider">All Properties</div>`;
+  }
+
+  container.innerHTML = html;
+  props.forEach((h,i) => container.insertAdjacentHTML('beforeend', buildHotelCard(h, false, i, nights)));
+
+  container.querySelectorAll('.hotel-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const name = card.dataset.name;
+      const chain = card.dataset.chain;
+      if (name) trackSelection('hotel', { name, chain, location });
+    });
   });
 }
 
+function buildHotelCard(h, isRec, i, nights) {
+  const stars = h.hotel_class ? parseInt(h.hotel_class) : 0;
+  const isTitanium = h._titanium;
+  const isPref = h._preferred;
+  const wasSelected = h._wasSelected;
+
+  let cls = 'hotel-card';
+  if (isRec) cls += ' recommended';
+  else if (isTitanium) cls += ' titanium-prop';
+  else if (isPref) cls += ' preferred';
+  if (wasSelected) cls += ' selected-before';
+
+  const chainLabel = isTitanium ? 'Marriott Portfolio' : (h.type||'');
+
+  return `<div class="${cls}" style="animation-delay:${i*0.03}s" data-name="${h.name||''}" data-chain="${chainLabel}">
+    <div>
+      <div class="hotel-name">${h.name||'Hotel'}</div>
+      <div class="hotel-brand">${chainLabel}</div>
+      <div class="hotel-meta">
+        ${stars ? `<span class="stars">${'★'.repeat(stars)}</span>` : ''}
+        ${h.overall_rating ? `<span class="rating-badge">${h.overall_rating}/5</span>` : ''}
+        ${h.reviews ? `<span class="amenity-tag">${h.reviews.toLocaleString()} reviews</span>` : ''}
+        ${isTitanium ? `<span class="titanium-badge">◆ Titanium</span>` : ''}
+        ${isRec ? `<span class="tag preferred" style="font-size:0.52rem">★ Recommended</span>` : ''}
+        ${wasSelected && !isRec ? `<span class="tag picked">✓ Stayed before</span>` : ''}
+        ${h.check_in_time ? `<span class="amenity-tag">In: ${h.check_in_time}</span>` : ''}
+        ${h.check_out_time ? `<span class="amenity-tag">Out: ${h.check_out_time}</span>` : ''}
+        ${(h.amenities||[]).slice(0,3).map(a=>`<span class="amenity-tag">${a}</span>`).join('')}
+      </div>
+    </div>
+    <div class="flight-price" style="min-width:7rem">
+      <div class="price-main">${h.rate_per_night?.lowest ? h.rate_per_night.lowest.toLocaleString() : '—'}</div>
+      <div class="price-sub">${config.currency} / night</div>
+      ${h.total_rate?.lowest ? `<div style="font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--ink);font-weight:500;margin-top:0.3rem">${h.total_rate.lowest.toLocaleString()} total</div>` : ''}
+    </div>
+  </div>`;
+}
+
+// ─── Tabs ─────────────────────────────────────────────────────────────────────
 function switchTab(name, el) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
@@ -508,5 +878,6 @@ function switchTab(name, el) {
   document.getElementById('tab-'+name).classList.add('active');
 }
 </script>
+
 </body>
 </html>
